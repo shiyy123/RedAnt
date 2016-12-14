@@ -7,7 +7,7 @@ using System.IO.Ports;
 using System.Linq;
 using System.Threading;
 
-public class Rotate : MonoBehaviour
+public class Test : MonoBehaviour
 {
 
     public string portName = "COM3";
@@ -15,11 +15,6 @@ public class Rotate : MonoBehaviour
     private Parity parity = Parity.None;
     private int dataBits = 8;
     private StopBits stopBits = StopBits.One;
-
-    public Transform LeftUpLeg = null;
-    public Transform LeftLeg = null;
-    public Transform RightUpLeg = null;
-    public Transform RightLeg = null;
 
     private SerialPort sp = null;
 
@@ -30,18 +25,18 @@ public class Rotate : MonoBehaviour
 
     private Queue<PacketData> dataQueue = new Queue<PacketData>();
 
+
+    public static Quaternion quat = new Quaternion();
     public static PacketData packetData = new PacketData();
 
-    private bool rightLegFirst = true;
-    private bool rightUpLegFirst = true;
-
-
-    private static Quaternion preRightUpLeg = new Quaternion();
-    private static Quaternion preRightLeg = new Quaternion();
+    private Quaternion preQuat = new Quaternion();
+    private bool firstQuat = true;
 
     // Use this for initialization
     void Start()
     {
+        Debug.Log("init : "+transform.rotation.ToString());
+
         OpenPort();
 
         receiveThread = new Thread(new ThreadStart(receiveData));
@@ -105,7 +100,8 @@ public class Rotate : MonoBehaviour
                 }
                 catch (Exception ex)
                 {
-                    Debug.Log(ex.Message);
+                    //Debug.Log(ex.Message);
+                    Debug.Log(ex.Message + "No enough data");
                 }
             }
         }
@@ -120,7 +116,8 @@ public class Rotate : MonoBehaviour
         {
             if (buffer.Count > 24)
             {
-                if (buffer[0] == 0x80 && (buffer[1] == 0x0A || buffer[1] == 0x0B || buffer[1] == 0x0C || buffer[1] == 0x0D))
+                if (buffer[0] == 0x80 && (buffer[1] == 0x0A || buffer[1] == 0x0B || buffer[1] == 0x0C || buffer[1] == 0x0D)
+                    && buffer[2] == 0x00)
                 {
                     PacketData tempPacket = new PacketData();
                     for (int i = 0; i < 24; i++)
@@ -138,7 +135,7 @@ public class Rotate : MonoBehaviour
                         buffer.RemoveRange(0, 23);
                     }
                 }
-                else
+                else//未取得想要的数据包起始标志
                 {
                     lock (buffer)
                     {
@@ -149,15 +146,7 @@ public class Rotate : MonoBehaviour
         }
     }
 
-    void OnDestroy()
-    {
-        ClosePort();
-        buffer.Clear();
-        dataQueue.Clear();
-        GC.Collect();
-        receiveThread.Abort();
-        processThread.Abort();
-    }
+    
 
     private void NormalizeQuat(ref Quaternion q)//归一化
     {
@@ -177,13 +166,6 @@ public class Rotate : MonoBehaviour
         q.w *= N;
     }
 
-    private void InverseQuat(ref Quaternion q)
-    {
-        q.x = -q.x;
-        q.y = -q.y;
-        q.z = -q.z;
-    }
-
 
     void FixedUpdate()
     {
@@ -196,7 +178,6 @@ public class Rotate : MonoBehaviour
                 packetData = dataQueue.Dequeue();
             }
             ProcessNode(ref packetData);
-
         }
     }
 
@@ -208,60 +189,48 @@ public class Rotate : MonoBehaviour
         q.y = -FixedToFloat(Combine(p.data[10], p.data[11]));
         q.z = FixedToFloat(Combine(p.data[8], p.data[9]));
 
-        NormalizeQuat(ref q);
+        //四元数归一化
+        //NormalizeQuat(ref q);
 
         //Debug.Log("process: " + q.w.ToString() + " " + q.x.ToString() + " " + q.y.ToString() + " " + q.z.ToString());
         //Debug.Log("process: " + q.eulerAngles.ToString());
-        //InverseQuat(ref q);
+
+        //q.eulerAngles = new Vector3(-q.eulerAngles.y, -q.eulerAngles.z, q.eulerAngles.x);
 
 
-        switch (p.data[1])
+        if (firstQuat)
         {
-            //case 0x0A:
-            //    LeftUpLeg.rotation = q;
-            //    break;
-
-            case 0x0B:
-                
-                //q.eulerAngles = new Vector3(q.eulerAngles.x, q.eulerAngles.y, q.eulerAngles.z); 
-                if (!rightUpLegFirst)
-                {
-                    Quaternion tempQuat = q;
-                    q.eulerAngles -= preRightUpLeg.eulerAngles;
-                    preRightUpLeg = tempQuat;
-                    RightUpLeg.transform.Rotate(q.eulerAngles, Space.World); 
-                }
-                else
-                {
-                    preRightUpLeg = q;
-                    rightUpLegFirst = false;
-                }
-               
-                break;
-
-            //case 0x0C:
-            //    RightUpLeg.rotation = q;
-            //    break;
-
-            case 0x0D:
-                if (!rightLegFirst)
-                {
-                    Quaternion tempQuat = q;
-                    q.eulerAngles -= preRightLeg.eulerAngles;
-                    preRightLeg = tempQuat;
-                    RightLeg.transform.Rotate(q.eulerAngles, Space.Self);
-                }
-                else
-                {
-                    preRightLeg = q;
-                    rightLegFirst = false;
-                }
-                break;
-
-            default:
-                Debug.Log(packetData.data[1].ToString() + "no such node");
-                break;
+            preQuat = q;
+            firstQuat = false;
         }
+        else
+        {
+            Debug.Log(q.ToString());
+            //Quaternion tempQuat = q;
+            //q = Quaternion.Inverse(preQuat) * q;
+            //preQuat = tempQuat;
+            //transform.rotation = q;
+
+        }
+
+        
+    }
+
+    private Vector3 NormalizeEulerData(Vector3 v)
+    {
+        if (v.x < 0.0f && v.x >= -180.0f)
+        {
+            v.x += 360.0f;
+        }
+        if (v.y < 0.0f && v.y >= -180.0f)
+        {
+            v.y += 360.0f;
+        }
+        if (v.z < 0.0f && v.z >= -180.0f)
+        {
+            v.z += 360.0f;
+        }
+        return v;
     }
 
     /// <summary>
@@ -284,9 +253,14 @@ public class Rotate : MonoBehaviour
     {
         return (short)((short)((short)a << 8) | (short)b);
     }
-}
 
-public class PacketData
-{
-    public byte[] data = new byte[24];
+    void OnApplicationQuit()
+    {
+        ClosePort();
+        buffer.Clear();
+        dataQueue.Clear();
+        buffer = null;
+        dataQueue = null;
+        GC.Collect();
+    }
 }

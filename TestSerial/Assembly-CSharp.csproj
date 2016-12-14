@@ -47,7 +47,8 @@
   <ItemGroup>
      <Compile Include="Assets\script\HeroController.cs" />
      <Compile Include="Assets\script\Rotate.cs" />
-     <Compile Include="Assets\script\TriggerDetection.cs" />
+     <Compile Include="Assets\script\Test.cs" />
+     <Compile Include="Assets\script\TestRotation.cs" />
      <None Include="Assets\Standard Assets\CrossPlatformInput\CrossPlatformInputGuidelines.txt" />
      <None Include="Assets\Standard Assets\Characters\ThirdPersonCharacter\ThirdPersonCharacterGuidelines.txt" />
      <None Include="Assets\Standard Assets\Characters\FirstPersonCharacter\FirstPersonCharacterGuidelines.txt" />
