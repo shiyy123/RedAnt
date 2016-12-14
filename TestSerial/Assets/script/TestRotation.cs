@@ -6,14 +6,20 @@ public class TestRotation : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
-        
+        Quaternion q1 = new Quaternion();
+        Quaternion q2 = new Quaternion();
+        q1.eulerAngles = new Vector3(30, 0, 0);
+        q2.eulerAngles = new Vector3(10, 0, 0);
 
-
+        transform.rotation = Quaternion.Inverse(q2) * q1;
 
 	}
 	
 	// Update is called once per frame
 	void Update () {
+
+        
+
 
         //父节点
         //if (Input.GetKey(KeyCode.Alpha1))

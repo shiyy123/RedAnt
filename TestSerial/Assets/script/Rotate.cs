@@ -32,16 +32,19 @@ public class Rotate : MonoBehaviour
 
     public static PacketData packetData = new PacketData();
 
-    private bool rightLegFirst = true;
-    private bool rightUpLegFirst = true;
+    private static Quaternion corRightUpLeg = new Quaternion();
+    private static Quaternion corRightLeg = new Quaternion();
 
-
-    private static Quaternion preRightUpLeg = new Quaternion();
-    private static Quaternion preRightLeg = new Quaternion();
-
-    // Use this for initialization
+    
+    /// <summary>
+    /// Init the correction of the bones of the skeleton
+    /// </summary>
     void Start()
     {
+        
+        corRightLeg = RightLeg.rotation;
+        corRightUpLeg = RightUpLeg.rotation;
+
         OpenPort();
 
         receiveThread = new Thread(new ThreadStart(receiveData));
@@ -205,7 +208,8 @@ public class Rotate : MonoBehaviour
         Quaternion q = new Quaternion();
         q.w = FixedToFloat(Combine(p.data[4], p.data[5]));
         q.x = FixedToFloat(Combine(p.data[6], p.data[7]));
-        q.y = -FixedToFloat(Combine(p.data[10], p.data[11]));
+        //q.y = -FixedToFloat(Combine(p.data[10], p.data[11]));
+        q.y = FixedToFloat(Combine(p.data[10], p.data[11]));
         q.z = FixedToFloat(Combine(p.data[8], p.data[9]));
 
         NormalizeQuat(ref q);
@@ -221,42 +225,32 @@ public class Rotate : MonoBehaviour
             //    LeftUpLeg.rotation = q;
             //    break;
 
-            case 0x0B:
-                
-                //q.eulerAngles = new Vector3(q.eulerAngles.x, q.eulerAngles.y, q.eulerAngles.z); 
-                if (!rightUpLegFirst)
-                {
-                    Quaternion tempQuat = q;
-                    q.eulerAngles -= preRightUpLeg.eulerAngles;
-                    preRightUpLeg = tempQuat;
-                    RightUpLeg.transform.Rotate(q.eulerAngles, Space.World); 
-                }
-                else
-                {
-                    preRightUpLeg = q;
-                    rightUpLegFirst = false;
-                }
-               
+            case 0x0D:
+
+                RightUpLeg.rotation = q * corRightUpLeg;
+
                 break;
 
             //case 0x0C:
             //    RightUpLeg.rotation = q;
             //    break;
 
-            case 0x0D:
-                if (!rightLegFirst)
-                {
-                    Quaternion tempQuat = q;
-                    q.eulerAngles -= preRightLeg.eulerAngles;
-                    preRightLeg = tempQuat;
-                    RightLeg.transform.Rotate(q.eulerAngles, Space.Self);
-                }
-                else
-                {
-                    preRightLeg = q;
-                    rightLegFirst = false;
-                }
-                break;
+            //case 0x0D:
+
+            //    RightLeg.rotation = q * corRightLeg;
+            //    //if (!rightLegFirst)
+            //    //{
+            //    //    Quaternion tempQuat = q;
+            //    //    q.eulerAngles -= preRightLeg.eulerAngles;
+            //    //    preRightLeg = tempQuat;
+            //    //    RightLeg.transform.Rotate(q.eulerAngles, Space.Self);
+            //    //}
+            //    //else
+            //    //{
+            //    //    preRightLeg = q;
+            //    //    rightLegFirst = false;
+            //    //}
+            //    break;
 
             default:
                 Debug.Log(packetData.data[1].ToString() + "no such node");

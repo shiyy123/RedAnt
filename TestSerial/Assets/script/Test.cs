@@ -31,11 +31,13 @@ public class Test : MonoBehaviour
 
     private Quaternion preQuat = new Quaternion();
     private bool firstQuat = true;
+    private Quaternion corQuat = new Quaternion();
 
     // Use this for initialization
     void Start()
     {
-        Debug.Log("init : "+transform.rotation.ToString());
+        //Debug.Log("init : "+transform.rotation.ToString());
+        corQuat = transform.rotation;
 
         OpenPort();
 
@@ -198,22 +200,25 @@ public class Test : MonoBehaviour
         //q.eulerAngles = new Vector3(-q.eulerAngles.y, -q.eulerAngles.z, q.eulerAngles.x);
 
 
-        if (firstQuat)
-        {
-            preQuat = q;
-            firstQuat = false;
-        }
-        else
-        {
-            Debug.Log(q.ToString());
-            //Quaternion tempQuat = q;
-            //q = Quaternion.Inverse(preQuat) * q;
-            //preQuat = tempQuat;
-            //transform.rotation = q;
+        transform.rotation = q * Quaternion.Inverse(corQuat);
 
-        }
+        //if (firstQuat)
+        //{
+        //    preQuat = q;
+        //    firstQuat = false;
+        //}
+        //else
+        //{
+        //    //Matrix4x4 m = transform.worldToLocalMatrix;
+        //    //Debug.Log(m.ToString());
 
-        
+        //    //transform.Rotate(preQuat.eulerAngles);
+        //    //transform.Rotate(q.eulerAngles);
+
+        //    transform.rotation = q * Quaternion.Inverse(preQuat);
+        //    preQuat = q;
+
+        //}
     }
 
     private Vector3 NormalizeEulerData(Vector3 v)
