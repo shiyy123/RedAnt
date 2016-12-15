@@ -20,6 +20,8 @@ public class Rotate : MonoBehaviour
     public Transform LeftLeg = null;
     public Transform RightUpLeg = null;
     public Transform RightLeg = null;
+    public Transform RightArm = null;
+    public Transform RightForeArm = null;
 
     private SerialPort sp = null;
 
@@ -34,6 +36,8 @@ public class Rotate : MonoBehaviour
 
     private static Quaternion corRightUpLeg = new Quaternion();
     private static Quaternion corRightLeg = new Quaternion();
+    private static Quaternion corRightArm = new Quaternion();
+    private static Quaternion corRightForeArm = new Quaternion();
 
     
     /// <summary>
@@ -44,6 +48,8 @@ public class Rotate : MonoBehaviour
         
         corRightLeg = RightLeg.rotation;
         corRightUpLeg = RightUpLeg.rotation;
+        corRightArm = RightArm.rotation;
+        corRightForeArm = RightForeArm.rotation;
 
         OpenPort();
 
@@ -227,7 +233,10 @@ public class Rotate : MonoBehaviour
 
             case 0x0D:
 
-                RightUpLeg.rotation = q * corRightUpLeg;
+                //RightUpLeg.rotation = q * corRightUpLeg;
+                //RightArm.rotation = q * corRightArm;
+                RightForeArm.rotation = q * corRightForeArm;
+
 
                 break;
 
