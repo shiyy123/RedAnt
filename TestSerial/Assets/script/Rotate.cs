@@ -209,14 +209,26 @@ public class Rotate : MonoBehaviour
         }
     }
 
+    private float datarecover(byte ah, byte al)
+	{
+		float res;
+		res = (float)((short)(ah << 8) | al) / (1 << 15);
+		res *= 2.0f;
+		return res;
+	}
+
     private void ProcessNode(ref PacketData p)
     {
         Quaternion q = new Quaternion();
-        q.w = FixedToFloat(Combine(p.data[4], p.data[5]));
-        q.x = FixedToFloat(Combine(p.data[6], p.data[7]));
-        //q.y = -FixedToFloat(Combine(p.data[10], p.data[11]));
-        q.y = FixedToFloat(Combine(p.data[10], p.data[11]));
-        q.z = FixedToFloat(Combine(p.data[8], p.data[9]));
+        //q.w = FixedToFloat(Combine(p.data[4], p.data[5]));
+        //q.x = FixedToFloat(Combine(p.data[6], p.data[7]));
+        //q.y = FixedToFloat(Combine(p.data[10], p.data[11]));
+        //q.z = FixedToFloat(Combine(p.data[8], p.data[9]));
+
+        q.w = datarecover(p.data[4], p.data[5]);
+        q.x = datarecover(p.data[6], p.data[7]);
+        q.y = datarecover(p.data[10], p.data[11]);
+        q.z = datarecover(p.data[8], p.data[9]);
 
         NormalizeQuat(ref q);
 
@@ -234,8 +246,8 @@ public class Rotate : MonoBehaviour
             case 0x0D:
 
                 //RightUpLeg.rotation = q * corRightUpLeg;
-                //RightArm.rotation = q * corRightArm;
-                RightForeArm.rotation = q * corRightForeArm;
+                RightArm.rotation = q * corRightArm;
+                //RightForeArm.rotation = q * corRightForeArm;
 
 
                 break;
